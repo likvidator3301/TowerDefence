@@ -16,6 +16,7 @@ from CrotysEngine import Constants
 class GameSession:
     def __init__(self, scene_loader, debug):
         self.run = False
+        self.need_to_restart = False
         self.objects_for_create = []
         self.load_scene(scene_loader)
         if not debug:
@@ -59,6 +60,9 @@ class GameSession:
                 game_object.started = True
 
     def destroy_object(self, game_object):
+        game_object.destroyed = True
+
+    def _destroy_object(self, game_object):
         self.scene.destroy_object_by_name(game_object.name)
         if game_object.visible:
             self.window.destroy_object(game_object.name)
@@ -107,6 +111,9 @@ class GameSession:
         if not self.run:
             self._stop_game()
 
+        if self.need_to_restart:
+            self._restart_game()
+
     def start_game(self):
         self.start_objects()
         self.timer = QTimer()
@@ -114,12 +121,16 @@ class GameSession:
         self.timer.timeout.connect(self.turn)
         self.timer.start(30)
         self.run = True
+        self.need_to_restart = False
 
     def stop_game(self):
         self.run = False
 
     def restart_game(self):
-        self._stop_game()
+        self.run = False
+        self.need_to_restart = True
+
+    def _restart_game(self):
         scene_loader = self.current_scene_loader
         self.upload_scene()
         self.load_scene(scene_loader)

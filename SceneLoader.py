@@ -61,6 +61,11 @@ class FirstSceneLoader(SceneLoader):
                                          tower2))
         game_objects.append(s.UILabel('GoldLabel', 75, 750, 100, 50))
 
+        restart_button = s.VisibleGameObject('RestartButton', 64, 64, 64, 64, path_to_sprites + 'defence_tower_2.png')
+        restart_button.add_behaviour(b.RestartButton())
+
+        game_objects.append(restart_button)
+
         return game_objects
 
     def get_path_to_scene_sprite(self):

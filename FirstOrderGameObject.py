@@ -25,6 +25,15 @@ class Scene:
     def destroy_object_by_name(self, name):
         self.game_objects[name] = None
 
+    def get_objects_by_tag(self, tag):
+        result = []
+        for obj in self.game_objects.values():
+            if obj is None:
+                continue
+            if obj.tag == tag:
+                result.append(obj)
+        return result
+
 
 if __name__ == '__main__':
     pass

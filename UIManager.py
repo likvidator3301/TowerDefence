@@ -22,7 +22,10 @@ class MainWindow(QWidget):
 
     def initUI(self, fullscreen):
         self.setWindowTitle('MyGameEngine')
-        self.showFullScreen()
+        if fullscreen:
+            self.showFullScreen()
+        else:
+            self.show()
 
     def show_scene(self, scene):
         self.close()

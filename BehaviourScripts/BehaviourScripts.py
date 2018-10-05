@@ -94,7 +94,7 @@ class HealthSystem(i.IBehaviour):
 
     def update(self, session, game_object):
         if self.health <= 0:
-            self.destroy(session, game_object)
+            session.destroy_object(game_object)
 
     def on_mouse_down(self, session, game_object):
         pass
@@ -103,7 +103,7 @@ class HealthSystem(i.IBehaviour):
         self.health += delta
 
     def destroy(self, session, game_object):
-        game_object.destroyed = True
+        pass
 
     def set_health(self, value):
         self.health = value
@@ -169,6 +169,7 @@ class Manager(i.IBehaviour):
         self.max_count_of_enemys = 0
 
     def start(self, session, game_object):
+        self.player_win = False
         self.enemy_id = 0
         self.count_of_enemys = 0
         self.count_of_enemys_on_scene = 0
@@ -201,7 +202,7 @@ class Manager(i.IBehaviour):
         elif self.third_wave:
             count_of_enemys = self.third_count
             interval = self.third_interval
-        elif self.count_of_enemys_on_scene == 0:
+        elif self.count_of_enemys_on_scene == 0 and not self.player_win:
             self.win_game(session)
 
         if self.count_of_enemys < count_of_enemys and self.timer > interval:
@@ -232,7 +233,7 @@ class Manager(i.IBehaviour):
     def win_game(self, session):
         session.add_game_object(s.VisibleGameObject('GameWin', 800, 450, 800, 250,
                                                     os.path.join('Sprites', 'game_win_label.png')))
-        session.stop_game()
+        self.player_win = True
 
     def get_ai_points(self):
         return self.ai_points
@@ -391,10 +392,17 @@ class EnemyAttack(i.IBehaviour):
 
     def start(self, session, game_object):
         self.main_tower = session.get_object_by_name('MainTower')
+        if self.main_tower is None:
+            self.active = False
+            return
+        else:
+            self.active = True
         self.main_tower_health_system = self\
             .main_tower.get_component('HealthSystem')
 
     def update(self, session, game_object):
+        if not self.active:
+            return
         dist = GameObjects\
             .get_distance_between_game_objects(game_object, self.main_tower)
         if dist <= self.attack_radius:
@@ -411,6 +419,9 @@ class EnemyAttack(i.IBehaviour):
 
     def set_damage(self, value):
         self.damage = value
+
+    def stop(self):
+        self.active = False
 
 class HealthLabel(i.IBehaviour):
     count = 0
@@ -429,6 +440,8 @@ class HealthLabel(i.IBehaviour):
 
     def update(self, session, game_object):
         part_of_max_health = int(self.health_system.health / self.one_sixed_part) + 1
+        if part_of_max_health > 6:
+            part_of_max_health = 6
         if part_of_max_health != self.part_of_max_health:
             if self.drawed:
                 session.destroy_object(self.label)
@@ -452,6 +465,15 @@ class MainTowerController(i.IBehaviour):
         self.name = 'MainTowerController'
 
     def destroy(self, session, game_object):
-        #session.add_game_object(s.VisibleGameObject('GameOver', 800, 450, 800, 250,
-                                                    #os.path.join('Sprites', 'game_over_label.png')))
+        session.add_game_object(s.VisibleGameObject('GameOver', 800, 450, 800, 250,
+                                                    os.path.join('Sprites', 'game_over_label.png')))
+        enemys = session.scene.get_objects_by_tag('Enemy')
+        for enemy in enemys:
+            enemy.get_component('EnemyAttack').stop()
+
+class RestartButton(i.IBehaviour):
+    def __init__(self):
+        self.name = 'RestartButton'
+
+    def on_mouse_down(self, session, game_object):
         session.restart_game()
