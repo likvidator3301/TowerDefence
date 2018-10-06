@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import math
+import copy
 import SecondOrderGameObject as s
 
 NUMBER_OF_CLONE = 0
@@ -24,6 +25,6 @@ def instantiate(object):
         new_object.set_path_to_sprite(object.path_to_sprite)
     new_object.set_tag(object.tag)
     for nameB in object.behaviour:
-        beh = object.get_component(nameB).__class__
-        new_object.add_behaviour(beh())
+        beh = copy.deepcopy(object.get_component(nameB))
+        new_object.add_behaviour(beh)
     return new_object

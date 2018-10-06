@@ -68,8 +68,6 @@ class SceneManager(i.IBehaviour):
             session.add_game_object(object)
             self.gold_manager.change_gold(-self.cost)
 
-
-
     def destroy(self, session, game_object):
         pass
 
@@ -487,3 +485,43 @@ class LevelLoaderButton(i.IBehaviour):
 
     def set_scene_loader(self, scene_loader):
         self.scene_loader = scene_loader
+
+class Animator(i.IBehaviour):
+    def __init__(self):
+        self.name = 'Animator'
+        self.path_to_animation = ''
+        self.pathes_to_sprites = []
+        self.timeout_in_frame = 1
+        self.counter = 0
+        self.number_of_frame = 1
+
+    def start(self, session, game_object):
+        self.playing = True
+
+    def set_path_to_animation(self, game_object, path_to_animation):
+        self.pathes_to_sprites = os.listdir(path_to_animation)
+        for i in range(0, len(self.pathes_to_sprites)):
+            self.pathes_to_sprites[i] = path_to_animation + self.pathes_to_sprites[i]
+        game_object.path_to_sprite = self.pathes_to_sprites[0]
+
+    def set_speed(self, speed_frame_per_second):
+        self.timeout_in_frame = 33 // speed_frame_per_second
+
+    def play(self):
+        self.playing = True
+
+    def stop(self):
+        self.playing = False
+
+    def update(self, session, game_object):
+        if not self.playing:
+            return
+
+        if self.counter >= self.timeout_in_frame:
+            if self.number_of_frame >= len(self.pathes_to_sprites) - 1:
+                self.number_of_frame = 0
+            else:
+                self.number_of_frame += 1
+            game_object.path_to_sprite = self.pathes_to_sprites[self.number_of_frame]
+            self.counter = 0
+        self.counter += 1

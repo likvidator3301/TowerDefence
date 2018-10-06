@@ -89,6 +89,10 @@ class DefenceTower(GameObject):
         self.path_to_sprite = path_to_sprite
         self.add_behaviour(b.ValuableObject())
         self.add_behaviour(b.DefenceTowerAttack())
+        animator = b.Animator()
+        animator.set_path_to_animation(self, path_to_sprite)
+        animator.set_speed(2)
+        self.add_behaviour(animator)
 
 
 class SceneManager(GameObject):

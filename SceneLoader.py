@@ -41,9 +41,9 @@ class FirstSceneLoader(SceneLoader):
         game_objects.append(s.SceneManager('SceneManager', 0, 0, 0, 0))
 
         tower1 = s.DefenceTower('DefenceTower1', 0, 0,
-                                64, 64, path_to_sprites + 'defence_tower_1.png')
+                                64, 64, path_to_sprites + 'defence_tower\\')
         tower2 = s.DefenceTower('DefenceTower2', 0, 0,
-                                64, 64, path_to_sprites + 'defence_tower_2.png')
+                                64, 64, path_to_sprites + 'defence_tower\\')
 
         tower1.get_component('DefenceTowerAttack').set_attack_radius(150)
         tower1.get_component('DefenceTowerAttack').set_damage(3)
@@ -76,7 +76,7 @@ class MainMenuSceneLoader(SceneLoader):
         path_to_sprites = os.path.join('Sprites', '')
         game_objects = []
 
-        first_level_button = s.LevelLoadButton('FirstLevelButton', 300, 500, 160, 90, path_to_sprites + 'level_1.png',
+        first_level_button = s.LevelLoadButton('FirstLevelButton', 150, 300, 160, 90, path_to_sprites + 'level_1.png',
                                                FirstSceneLoader())
         game_objects.append(first_level_button)
 
