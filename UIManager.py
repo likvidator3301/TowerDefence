@@ -19,6 +19,7 @@ class MainWindow(QWidget):
         self.initUI(fullscreen)
         self.mouse_down = False
         self.setMouseTracking(True)
+        self.showed_scene = False
 
     def initUI(self, fullscreen):
         self.setWindowTitle('MyGameEngine')
@@ -28,15 +29,18 @@ class MainWindow(QWidget):
             self.show()
 
     def show_scene(self, scene):
+        if self.showed_scene:
+            self.scene_label.deleteLater()
         self.close()
-        self.game_objects = {}
-        self.static_game_object = {}
+        self.game_objects = dict()
+        self.static_game_object = dict()
         self.scene_label = SceneLabel(self)
         pixmap = QPixmap(scene.background)
         self.scene_label.move(0, 0)
         self.scene_label.resize(pixmap.width(), pixmap.height())
         self.scene_label.setPixmap(pixmap)
         self.showFullScreen()
+        self.showed_scene = True
 
     def draw_game_object(self, game_object):
         x = int(game_object.x - game_object.width / 2)

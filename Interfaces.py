@@ -8,10 +8,6 @@ class IBehaviour:
     __metaclass__ = ABCMeta
 
     @abstractmethod
-    def __init__(self):
-        self.name = self.__class__.__name__
-
-    @abstractmethod
     def start(self, session, game_object):
         """Start method"""
 

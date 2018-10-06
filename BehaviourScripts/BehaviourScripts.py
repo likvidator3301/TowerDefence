@@ -477,3 +477,13 @@ class RestartButton(i.IBehaviour):
 
     def on_mouse_down(self, session, game_object):
         session.restart_game()
+
+class LevelLoaderButton(i.IBehaviour):
+    def __init__(self):
+        self.name = 'LevelLoaderButton'
+
+    def on_mouse_down(self, session, game_object):
+        session.load_scene(self.scene_loader)
+
+    def set_scene_loader(self, scene_loader):
+        self.scene_loader = scene_loader

@@ -17,8 +17,10 @@ class GameSession:
     def __init__(self, scene_loader, debug):
         self.run = False
         self.need_to_restart = False
+        self.need_to_load_next_scene = False
+        self.next_scene_loader = None
         self.objects_for_create = []
-        self.load_scene(scene_loader)
+        self._load_scene(scene_loader)
         if not debug:
             self.window = ui_manager.MainWindow(1600, 900, True)
             self.window.show_scene(self.scene)
@@ -26,13 +28,23 @@ class GameSession:
             self.create_level(self.current_scene_loader.create_object())
 
     def load_scene(self, scene_loader):
+        self.need_to_load_next_scene = True
+        self.stop_game()
+        self.next_scene_loader = scene_loader
+
+    def _load_scene(self, scene_loader):
         self.current_scene_loader = scene_loader
         self.scene = f.Scene(self.current_scene_loader.get_path_to_scene_sprite())
 
+    def _load_next_scene(self):
+        self._stop_game()
+        self.upload_scene()
+        self._load_scene(self.next_scene_loader)
+        self.window.show_scene(self.scene)
+        self.create_level(self.current_scene_loader.create_object())
+        self.start_game()
+
     def upload_scene(self):
-        for obj in self.scene.game_objects.values():
-            self.window.destroy_object(obj)
-        self.scene.delete_all_objects()
         self.scene = None
         self.current_scene_loader = None
 
@@ -82,12 +94,12 @@ class GameSession:
                 self.scene.destroy_object_by_name(name)
                 self.window.destroy_object(name)
                 continue
-
             for nameB in gameObject.behaviour:
                 if (gameObject.visible and
                         self.input.left_mouse_button_down(self, gameObject)):
                     gameObject.behaviour[nameB].on_mouse_down(self, gameObject)
                 gameObject.behaviour[nameB].update(self, gameObject)
+
 
             if gameObject.visible:
                 self.window.destroy_object(gameObject.name)
@@ -113,6 +125,8 @@ class GameSession:
 
         if self.need_to_restart:
             self._restart_game()
+        elif self.need_to_load_next_scene:
+            self._load_next_scene()
 
     def start_game(self):
         self.start_objects()
@@ -122,6 +136,7 @@ class GameSession:
         self.timer.start(30)
         self.run = True
         self.need_to_restart = False
+        self.need_to_load_next_scene = False
 
     def stop_game(self):
         self.run = False
@@ -133,7 +148,7 @@ class GameSession:
     def _restart_game(self):
         scene_loader = self.current_scene_loader
         self.upload_scene()
-        self.load_scene(scene_loader)
+        self._load_scene(scene_loader)
         self.create_level(self.current_scene_loader.create_object())
         self.start_game()
 
@@ -175,7 +190,7 @@ class Input:
 def main():
     app = QApplication(sys.argv)
 
-    session = GameSession(o.FirstSceneLoader(), False)
+    session = GameSession(o.MainMenuSceneLoader(), False)
 
     session.start_game()
 

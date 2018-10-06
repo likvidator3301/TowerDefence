@@ -71,3 +71,16 @@ class FirstSceneLoader(SceneLoader):
     def get_path_to_scene_sprite(self):
         return os.path.join('Sprites', 'scene_1.png')
 
+class MainMenuSceneLoader(SceneLoader):
+    def create_object(self):
+        path_to_sprites = os.path.join('Sprites', '')
+        game_objects = []
+
+        first_level_button = s.LevelLoadButton('FirstLevelButton', 300, 500, 160, 90, path_to_sprites + 'level_1.png',
+                                               FirstSceneLoader())
+        game_objects.append(first_level_button)
+
+        return game_objects
+
+    def get_path_to_scene_sprite(self):
+        return os.path.join('Sprites', 'main_menu.png')

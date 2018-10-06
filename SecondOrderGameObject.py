@@ -105,3 +105,13 @@ class UILabel(GameObject):
         controller = b.GoldLabel()
         self.add_behaviour(controller)
         self.text = controller.get_text()
+
+
+class LevelLoadButton(GameObject):
+    def __init__(self, name, x, y, width, height, path_to_sprite, scene_loader):
+        super().__init__(name,  x, y, width, height)
+        self.visible = True
+        self.path_to_sprite = path_to_sprite
+        controller = b.LevelLoaderButton()
+        controller.set_scene_loader(scene_loader)
+        self.add_behaviour(controller)
