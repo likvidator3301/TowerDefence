@@ -95,7 +95,7 @@ class MainWindow(QWidget):
     def get_mouse_event(self):
         try:
             return self.scene_label.mouse_event
-        except:
+        except Exception:
             return None
 
 
@@ -105,13 +105,13 @@ class SceneLabel(QLabel):
         self.mouse_down = False
         self.right_mouse_down = False
 
-    def mousePressEvent(self, QMouseEvent):
-        if QMouseEvent.button() == Qt.LeftButton:
+    def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton:
             self.mouse_down = True
-        elif QMouseEvent.button() == Qt.RightButton:
+        elif event.button() == Qt.RightButton:
             self.right_mouse_down = True
-        self.mouse_event = QMouseEvent
-        self.click_pos = QMouseEvent.pos()
+        self.mouse_event = event
+        self.click_pos = event.pos()
 
 
 class ObjectLabel(QLabel):
@@ -122,7 +122,3 @@ class ObjectLabel(QLabel):
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
             self.left_mouse_down = True
-
-
-if __name__ == "__main__":
-    pass

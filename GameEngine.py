@@ -3,14 +3,10 @@
 import UIManager as ui_manager
 import SceneLoader as o
 import FirstOrderGameObject as f
-import SecondOrderGameObject as s
 import sys
 
-from PyQt5.QtWidgets import QWidget, QHBoxLayout, QLabel, QApplication
-from PyQt5.QtCore import pyqtProperty, pyqtSignal, pyqtSlot, QPointF,\
-    QRectF, QSize, QSizeF, Qt, QTimer
-from PyQt5.QtGui import QPixmap
-from CrotysEngine import Constants
+from PyQt5.QtWidgets import QApplication
+from PyQt5.QtCore import QTimer
 
 
 class GameSession:
@@ -159,15 +155,8 @@ class GameSession:
         for obj in self.window.game_objects:
             self.window.destroy_object(obj)
 
-    def fixed_turn(self):
-        self.delta_time = 1 / self.fps
-        self.fps = 0
-
 
 class Input:
-    def __init__(self):
-        pass
-
     def left_mouse_button_down(self, session, object):
         return session.window.object_left_click(object)
 
@@ -179,9 +168,6 @@ class Input:
 
     def get_left_mouse_button_down_event(self, session):
         return session.window.get_mouse_event()
-
-    def get_key_down_event(self, session):
-        return
 
     def get_click_pos(self, session):
         return session.window.get_mouse_click_pos()

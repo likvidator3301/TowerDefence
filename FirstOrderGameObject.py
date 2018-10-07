@@ -33,7 +33,3 @@ class Scene:
             if obj.tag == tag:
                 result.append(obj)
         return result
-
-
-if __name__ == '__main__':
-    pass

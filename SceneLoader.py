@@ -30,7 +30,6 @@ class FirstSceneLoader(SceneLoader):
 
         enemys_manager = s.InvisibleGameObject('EnemysManager', 0, 0, 0, 0)
         controller = b.Manager()
-        controller.set_max_enemys(5)
         enemys_manager.add_behaviour(controller)
         game_objects.append(enemys_manager)
 

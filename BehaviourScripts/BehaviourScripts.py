@@ -22,11 +22,7 @@ class LabelForCreateObject(i.IBehaviour):
             .get_component('GoldManager')
 
     def update(self, session, game_object):
-        if self.scene_manager is None:
-            self.start()
-            return
-
-        if (session.input.get_right_button_scene_down(session)):
+        if session.input.get_right_button_scene_down(session):
             self.scene_manager.stop_tracking()
             game_object.path_to_sprite = self.path_to_default_object
 
@@ -35,9 +31,6 @@ class LabelForCreateObject(i.IBehaviour):
             game_object.path_to_sprite = self.path_to_enable_object
             self.scene_manager.set_creating_object(self.object, self.cost)
             self.scene_manager.start_tracking()
-
-    def destroy(self, session, game_object):
-        pass
 
 
 class SceneManager(i.IBehaviour):
@@ -55,7 +48,7 @@ class SceneManager(i.IBehaviour):
         if not self.tracking:
             return
 
-        if (session.input.get_left_button_scene_down(session) and self.gold_manager.get_gold() >= self.cost):
+        if session.input.get_left_button_scene_down(session) and self.gold_manager.get_gold() >= self.cost:
             pos = session.input.get_click_pos(session)
             x = pos.x()
             y = pos.y()
@@ -67,9 +60,6 @@ class SceneManager(i.IBehaviour):
 
             session.add_game_object(object)
             self.gold_manager.change_gold(-self.cost)
-
-    def destroy(self, session, game_object):
-        pass
 
     def set_creating_object(self, object, cost):
         self.object = object
@@ -94,14 +84,8 @@ class HealthSystem(i.IBehaviour):
         if self.health <= 0:
             session.destroy_object(game_object)
 
-    def on_mouse_down(self, session, game_object):
-        pass
-
     def change_health(self, delta):
         self.health += delta
-
-    def destroy(self, session, game_object):
-        pass
 
     def set_health(self, value):
         self.health = value
@@ -130,7 +114,7 @@ class AIController(i.IBehaviour):
             self.count_of_passed_point += 1
             try:
                 self.target = self.ai_points[self.count_of_passed_point]
-            except:
+            except Exception:
                 return
         else:
             if (self.count_of_passed_point == len(self.ai_points) - 1 and
@@ -147,9 +131,6 @@ class AIController(i.IBehaviour):
             game_object.x += speedX
             game_object.y += speedY
 
-    def on_mouse_down(self, session, game_object):
-        pass
-
     def destroy(self, session, game_object):
         session.get_object_by_name('GoldManager') \
             .get_component('GoldManager') \
@@ -157,8 +138,6 @@ class AIController(i.IBehaviour):
                          .get_cost())
         session.get_object_by_name('EnemysManager') \
             .get_component('Manager').on_destroy_enemy()
-
-        session.destroy_object(game_object)
 
 
 class Manager(i.IBehaviour):
@@ -236,9 +215,6 @@ class Manager(i.IBehaviour):
     def get_ai_points(self):
         return self.ai_points
 
-    def set_max_enemys(self, count):
-        pass
-
     def on_destroy_enemy(self):
         self.count_of_enemys_on_scene -= 1
 
@@ -253,15 +229,6 @@ class GoldLabel(i.IBehaviour):
         self.label = game_object
         self.started = True
 
-    def update(self, session, game_object):
-        pass
-
-    def on_mouse_down(self, session, game_object):
-        pass
-
-    def destroy(self, session, game_object):
-        pass
-
     def set_text(self, text):
         if self.started:
             self.text = text
@@ -275,19 +242,6 @@ class MovePoint(i.IBehaviour):
     def __init__(self):
         self.name = 'MovePoint'
 
-    def start(self, session, game_object):
-        game_object.started = True
-
-    def update(self, session, game_object):
-        pass
-
-    def on_mouse_down(self, session, game_object):
-        pass
-
-    def destroy(self, session, game_object):
-        pass
-
-
 class GoldManager(i.IBehaviour):
     def __init__(self):
         self.name = 'GoldManager'
@@ -300,12 +254,6 @@ class GoldManager(i.IBehaviour):
 
     def update(self, session, game_object):
         self.label.set_text('Gold: ' + str(self.gold))
-
-    def on_mouse_down(self, session, game_object):
-        pass
-
-    def destroy(self, session, game_object):
-        pass
 
     def set_gold(self, count):
         self.gold = count
@@ -322,18 +270,6 @@ class ValuableObject(i.IBehaviour):
         self.name = 'ValuableObject'
         self.cost = 0
 
-    def start(self, session, game_object):
-        pass
-
-    def update(self, session, game_object):
-        pass
-
-    def on_mouse_down(self, session, game_object):
-        pass
-
-    def destroy(self, session, game_object):
-        pass
-
     def set_cost(self, cost):
         self.cost = cost
 
@@ -346,9 +282,6 @@ class DefenceTowerAttack(i.IBehaviour):
         self.name = 'DefenceTowerAttack'
         self.attack_radius = 150
         self.damage = 3
-
-    def start(self, session, game_object):
-        pass
 
     def update(self, session, game_object):
         target = None
@@ -368,12 +301,6 @@ class DefenceTowerAttack(i.IBehaviour):
         health_system = target.get_component('HealthSystem')
         if health_system is not None:
             health_system.change_health(-self.damage)
-
-    def on_mouse_down(self, session, game_object):
-        pass
-
-    def destroy(self, session, game_object):
-        pass
 
     def set_attack_radius(self, value):
         self.attack_radius = value
@@ -405,12 +332,6 @@ class EnemyAttack(i.IBehaviour):
             .get_distance_between_game_objects(game_object, self.main_tower)
         if dist <= self.attack_radius:
             self.main_tower_health_system.change_health(-self.damage)
-
-    def on_mouse_down(self, session, game_object):
-        pass
-
-    def destroy(self, session, game_object):
-        pass
 
     def set_attack_radius(self, value):
         self.attack_radius = value
