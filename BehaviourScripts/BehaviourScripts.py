@@ -38,6 +38,7 @@ class SceneManager(i.IBehaviour):
         self.name = 'SceneManager'
 
     def start(self, session, game_object):
+        self.end_game = False
         self.gold_manager = session.get_object_by_name('GoldManager') \
             .get_component('GoldManager')
         self.object = None
@@ -342,6 +343,7 @@ class EnemyAttack(i.IBehaviour):
     def stop(self):
         self.active = False
 
+
 class HealthLabel(i.IBehaviour):
     count = 0
 
@@ -395,7 +397,51 @@ class RestartButton(i.IBehaviour):
         self.name = 'RestartButton'
 
     def on_mouse_down(self, session, game_object):
+        main_tower = session.get_object_by_name('MainTower')
+        if main_tower is None or session.get_object_by_name('EnemysManager').get_component('Manager').player_win:
+            session.restart_game()
+        else:
+            window = s.VisibleGameObject('ConfirmWindow', 800, 450, 500, 200,
+                                                        os.path.join('Sprites', 'ask.png'))
+            confirm_button = s.VisibleGameObject('ConfirmButton', 730, 470, 130, 90,
+                                                 os.path.join('Sprites', 'yes'))
+            confirm_button.add_behaviour(ConfirmRestartButton())
+
+            denial_button = s.VisibleGameObject('DenialButton', 870, 470, 130, 90,
+                                                 os.path.join('Sprites', 'no'))
+            denial_bitton_controller = DenialRestartButton()
+            denial_bitton_controller.set_window_and_button(window, confirm_button)
+            denial_button.add_behaviour(denial_bitton_controller)
+
+            session.add_game_object(window)
+            session.add_game_object(confirm_button)
+            session.add_game_object(denial_button)
+
+            session.pause()
+
+
+
+class ConfirmRestartButton(i.IBehaviour):
+    def __init__(self):
+        self.name = 'ConfirmRestartButton'
+
+    def on_mouse_down(self, session, game_object):
         session.restart_game()
+
+
+class DenialRestartButton(i.IBehaviour):
+    def __init__(self):
+        self.name = 'DenialRestartButton'
+
+    def set_window_and_button(self, window, confirm_button):
+        self.window_and_button = [window, confirm_button]
+
+    def on_mouse_down(self, session, game_object):
+        for obj in self.window_and_button:
+            session.destroy_object(obj)
+        session.continue_game()
+        session.destroy_object(game_object)
+
 
 class LevelLoaderButton(i.IBehaviour):
     def __init__(self):

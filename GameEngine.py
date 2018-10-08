@@ -12,8 +12,11 @@ from PyQt5.QtCore import QTimer
 class GameSession:
     def __init__(self, scene_loader, debug):
         self.run = False
+        self.paused = False
         self.need_to_restart = False
         self.need_to_load_next_scene = False
+        self.need_to_pause = False
+        self.need_to_continue = False
         self.next_scene_loader = None
         self.objects_for_create = []
         self._load_scene(scene_loader)
@@ -31,6 +34,20 @@ class GameSession:
     def _load_scene(self, scene_loader):
         self.current_scene_loader = scene_loader
         self.scene = f.Scene(self.current_scene_loader.get_path_to_scene_sprite())
+
+    def pause(self):
+        self.need_to_pause = True
+
+    def _pause(self):
+        self.paused = True
+        self.need_to_pause = False
+
+    def continue_game(self):
+        self.need_to_continue = True
+
+    def _continue_game(self):
+        self.paused = False
+        self.need_to_continue = False
 
     def _load_next_scene(self):
         self._stop_game()
@@ -77,7 +94,6 @@ class GameSession:
 
     def turn(self):
         self.objects_for_create.clear()
-        self.start_objects()
         objects = []
 
         for name in self.scene.game_objects:
@@ -94,7 +110,8 @@ class GameSession:
                 if (gameObject.visible and
                         self.input.left_mouse_button_down(self, gameObject)):
                     gameObject.behaviour[nameB].on_mouse_down(self, gameObject)
-                gameObject.behaviour[nameB].update(self, gameObject)
+                if not self.paused:
+                    gameObject.behaviour[nameB].update(self, gameObject)
 
 
             if gameObject.visible:
@@ -114,6 +131,7 @@ class GameSession:
         for gameObject in objects:
             self._add_game_object(gameObject)
 
+        self.start_objects()
         self.window.pass_event()
 
         if not self.run:
@@ -123,6 +141,10 @@ class GameSession:
             self._restart_game()
         elif self.need_to_load_next_scene:
             self._load_next_scene()
+        elif self.need_to_pause:
+            self._pause()
+        elif self.need_to_continue:
+            self._continue_game()
 
     def start_game(self):
         self.start_objects()
@@ -133,6 +155,8 @@ class GameSession:
         self.run = True
         self.need_to_restart = False
         self.need_to_load_next_scene = False
+        self.need_to_pause = False
+        self.need_to_continue = False
 
     def stop_game(self):
         self.run = False
@@ -142,6 +166,7 @@ class GameSession:
         self.need_to_restart = True
 
     def _restart_game(self):
+        self._continue_game()
         scene_loader = self.current_scene_loader
         self.upload_scene()
         self._load_scene(scene_loader)
