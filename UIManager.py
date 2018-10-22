@@ -59,6 +59,7 @@ class MainWindow(QWidget):
         else:
             lbl = ObjectLabel(self.scene_label, game_object.name)
             pixmap = QPixmap(game_object.path_to_sprite)
+            hasA = pixmap.hasAlphaChannel()
             lbl.resize(game_object.width, game_object.height)
             lbl.move(x, y)
             lbl.resize(game_object.width, game_object.height)
@@ -118,6 +119,7 @@ class ObjectLabel(QLabel):
     def __init__(self, parrent, name):
         super().__init__(parrent)
         self.left_mouse_down = False
+        self.backgroundRole()
 
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:

@@ -145,17 +145,16 @@ class Manager(i.IBehaviour):
     def __init__(self):
         self.name = 'Manager'
         self.max_count_of_enemys = 0
+        self.ai_points = []
+        self.spawn_point = None
+        self.first_damage_rule = lambda enemy, damage, tower: damage * tower.get_component('DefenceTowerAttack').tower_type
+        self.second_damage_rule = lambda enemy, damage, tower: 200 / GameObjects.get_distance_between_game_objects(enemy, tower) * damage
 
     def start(self, session, game_object):
         self.player_win = False
         self.enemy_id = 0
         self.count_of_enemys = 0
         self.count_of_enemys_on_scene = 0
-        self.spawn_point = s.GameObject('spawn_point', 100, 470, 0, 0)
-        self.ai_points = []
-        self.ai_points.append(s.GameObject('AIPoint1', 375, 470, 0, 0))
-        self.ai_points.append(s.GameObject('AIPoint2', 1135, 240, 0, 0))
-        self.ai_points.append(s.GameObject('AIPoint3', 1400, 240, 0, 0))
         game_object.started = True
         self.timer = 350
         self.first_wave = True
@@ -184,10 +183,7 @@ class Manager(i.IBehaviour):
             self.win_game(session)
 
         if self.count_of_enemys < count_of_enemys and self.timer > interval:
-            name = 'Enemy' + str(self.enemy_id)
-            enemy = s.Enemy(name, self.spawn_point.x, self.spawn_point.y,
-                 64, 64, os.path.join('Sprites', 'enemy_1.png'))
-            enemy.get_component('ValuableObject').set_cost(10)
+            enemy = self.create_enemy()
             session.add_game_object(enemy)
             self.enemy_id += 1
             self.count_of_enemys += 1
@@ -208,6 +204,19 @@ class Manager(i.IBehaviour):
                 self.third_wave = False
         self.timer += 1
 
+    def create_enemy(self):
+        name = 'Enemy' + str(self.enemy_id)
+        if self.enemy_id % 2 == 0:
+            enemy = s.Enemy(name, self.spawn_point.x, self.spawn_point.y,
+                            64, 64, os.path.join('Sprites', 'enemy_1.png'))
+            enemy.get_component('EnemyDamageController').set_rule(self.first_damage_rule)
+        else:
+            enemy = s.Enemy(name, self.spawn_point.x, self.spawn_point.y,
+                            64, 64, os.path.join('Sprites', 'enemy_2.png'))
+            enemy.get_component('EnemyDamageController').set_rule(self.second_damage_rule)
+        enemy.get_component('ValuableObject').set_cost(10)
+        return enemy
+
     def win_game(self, session):
         session.add_game_object(s.VisibleGameObject('GameWin', 800, 450, 800, 250,
                                                     os.path.join('Sprites', 'game_win_label.png')))
@@ -215,6 +224,12 @@ class Manager(i.IBehaviour):
 
     def get_ai_points(self):
         return self.ai_points
+
+    def add_ai_point(self, point):
+        self.ai_points.append(point)
+
+    def set_spawn_point(self, spawn_point):
+        self.spawn_point = spawn_point
 
     def on_destroy_enemy(self):
         self.count_of_enemys_on_scene -= 1
@@ -283,6 +298,11 @@ class DefenceTowerAttack(i.IBehaviour):
         self.name = 'DefenceTowerAttack'
         self.attack_radius = 150
         self.damage = 3
+        self.tower_type = 0
+
+    def start(self, session, game_object):
+        self.attack = False
+        self.animator = game_object.get_component('Animator')
 
     def update(self, session, game_object):
         target = None
@@ -296,18 +316,26 @@ class DefenceTowerAttack(i.IBehaviour):
             if dist < min_dist and dist <= self.attack_radius:
                 target = object
                 min_dist = dist
+
         if target is None:
+            if self.animator.playing:
+                self.animator.stop()
+                self.animator.to_start()
             return
 
-        health_system = target.get_component('HealthSystem')
-        if health_system is not None:
-            health_system.change_health(-self.damage)
+        self.animator.play()
+        damage_controller = target.get_component('EnemyDamageController')
+        if damage_controller is not None:
+            damage_controller.take_damage(target, self.damage, game_object)
 
     def set_attack_radius(self, value):
         self.attack_radius = value
 
     def set_damage(self, value):
         self.damage = value
+
+    def set_type(self, tower_type):
+        self.tower_type = tower_type
 
 
 class EnemyAttack(i.IBehaviour):
@@ -464,6 +492,7 @@ class Animator(i.IBehaviour):
 
     def start(self, session, game_object):
         self.playing = True
+        self.game_object = game_object
 
     def set_path_to_animation(self, game_object, path_to_animation):
         self.pathes_to_sprites = os.listdir(path_to_animation)
@@ -480,6 +509,10 @@ class Animator(i.IBehaviour):
     def stop(self):
         self.playing = False
 
+    def to_start(self):
+        self.game_object.path_to_sprite = self.pathes_to_sprites[0]
+        self.number_of_frame = 0
+
     def update(self, session, game_object):
         if not self.playing:
             return
@@ -492,3 +525,54 @@ class Animator(i.IBehaviour):
             game_object.path_to_sprite = self.pathes_to_sprites[self.number_of_frame]
             self.counter = 0
         self.counter += 1
+
+
+class DefenceTowerUpgrade(i.IBehaviour):
+    def __init__(self):
+        self.name = 'DefenceTowerUpgrade'
+        self.cost = 0
+        self.next_tower = None
+        self.can_upgrade = False
+
+    def start(self, session, game_object):
+        self.gold_manager = session.get_object_by_name('GoldManager') \
+            .get_component('GoldManager')
+
+    def upgrade(self, session, game_object):
+        session.destroy_object(game_object)
+        new_tower = self.next_tower
+        new_tower.x = game_object.x
+        new_tower.y = game_object.y
+        session.add_game_object(new_tower)
+
+    def set_next_tower(self, new_tower):
+        self.next_tower = new_tower
+
+    def set_cost(self, cost):
+        self.cost = cost
+
+    def activate(self):
+        self.can_upgrade = True
+
+    def on_mouse_down(self, session, game_object):
+        if not self.can_upgrade and \
+                self.gold_manager.get_gold() < self.cost:
+            return
+        self.upgrade(session, game_object)
+        self.gold_manager.change_gold(-self.cost)
+
+
+class EnemyDamageController(i.IBehaviour):
+    def __init__(self):
+        self.name = 'EnemyDamageController'
+        self.rule = None
+
+    def start(self, session, game_object):
+        self.health_system = game_object.get_component('HealthSystem')
+
+    def set_rule(self, rule):
+        self.rule = rule
+
+    def take_damage(self, enemy, damage, tower):
+        self.health_system.change_health(-self.rule(enemy, damage, tower))
+
