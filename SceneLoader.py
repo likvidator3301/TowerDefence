@@ -62,8 +62,10 @@ class FirstSceneLoader(SceneLoader):
 
         tower2 = s.DefenceTower('DefenceTower1', 0, 0,
                                 64, 64, os.path.join(path_to_sprites + 'defence_tower_1', ''))
+        tower2.add_behaviour(b.ReinforcementTower())
         tower2_level2 = s.DefenceTower('DefenceTower1', 0, 0,
                                        64, 64, os.path.join(path_to_sprites + 'defence_tower_1_2', ''))
+        tower1_level2.add_behaviour(b.ReinforcementTower())
         tower2.get_component('DefenceTowerAttack').set_attack_radius(150)
         tower2.get_component('DefenceTowerAttack').set_damage(2)
         tower2.get_component('DefenceTowerAttack').set_type(2)
@@ -77,14 +79,14 @@ class FirstSceneLoader(SceneLoader):
         tower2.get_component('ValuableObject').set_cost(40)
 
         game_objects.append(s.TowerLabel('TowerLabel_1', 300, 800,
-                                         100, 180, path_to_sprites + 'tower_label_1.png', 'tower_label_enable_1.png',
+                                         200, 180, path_to_sprites + 'tower_label_1.png', 'tower_label_enable_1.png',
                                          tower1))
-        game_objects.append(s.TowerLabel('TowerLabel_2', 500, 800,
-                                         100, 180, path_to_sprites + 'tower_label_2.png', 'tower_label_enable_2.png',
+        game_objects.append(s.TowerLabel('TowerLabel_2', 550, 800,
+                                         200, 180, path_to_sprites + 'tower_label_2.png', 'tower_label_enable_2.png',
                                          tower2))
         game_objects.append(s.UILabel('GoldLabel', 75, 750, 100, 50))
 
-        restart_button = s.VisibleGameObject('RestartButton', 64, 64, 64, 64, path_to_sprites + 'defence_tower_2.png')
+        restart_button = s.VisibleGameObject('RestartButton', 50, 30, 80, 45, path_to_sprites + 'restart_button.png')
         restart_button.add_behaviour(b.RestartButton())
 
         game_objects.append(restart_button)
@@ -141,10 +143,12 @@ class SecondSceneLoader(SceneLoader):
         tower1_upgrade_manager.set_next_tower(tower1_level2)
         tower1.get_component('ValuableObject').set_cost(30)
 
-        tower2 = s.DefenceTower('DefenceTower2', 0, 0,
-                                64, 64, path_to_sprites + 'defence_tower_2.png')
-        tower2_level2 = s.DefenceTower('DefenceTower2', 0, 0,
-                                       64, 64, path_to_sprites + 'defence_tower_2_2.png')
+        tower2 = s.DefenceTower('DefenceTower1', 0, 0,
+                                64, 64, os.path.join(path_to_sprites + 'defence_tower_1', ''))
+        tower2.add_behaviour(b.ReinforcementTower())
+        tower2_level2 = s.DefenceTower('DefenceTower1', 0, 0,
+                                       64, 64, os.path.join(path_to_sprites + 'defence_tower_1_2', ''))
+        tower1_level2.add_behaviour(b.ReinforcementTower())
         tower2.get_component('DefenceTowerAttack').set_attack_radius(150)
         tower2.get_component('DefenceTowerAttack').set_damage(2)
         tower2_level2.get_component('DefenceTowerAttack').set_attack_radius(200)
@@ -156,14 +160,14 @@ class SecondSceneLoader(SceneLoader):
         tower2.get_component('ValuableObject').set_cost(40)
 
         game_objects.append(s.TowerLabel('TowerLabel_1', 300, 800,
-                                         100, 180, path_to_sprites + 'tower_label_1.png', 'tower_label_enable_1.png',
+                                         200, 180, path_to_sprites + 'tower_label_1.png', 'tower_label_enable_1.png',
                                          tower1))
-        game_objects.append(s.TowerLabel('TowerLabel_2', 500, 800,
-                                         100, 180, path_to_sprites + 'tower_label_2.png', 'tower_label_enable_2.png',
+        game_objects.append(s.TowerLabel('TowerLabel_2', 550, 800,
+                                         200, 180, path_to_sprites + 'tower_label_2.png', 'tower_label_enable_2.png',
                                          tower2))
         game_objects.append(s.UILabel('GoldLabel', 75, 750, 100, 50))
 
-        restart_button = s.VisibleGameObject('RestartButton', 64, 64, 64, 64, path_to_sprites + 'defence_tower_2.png')
+        restart_button = s.VisibleGameObject('RestartButton', 50, 30, 80, 45, path_to_sprites + 'restart_button.png')
         restart_button.add_behaviour(b.RestartButton())
 
         game_objects.append(restart_button)
@@ -182,11 +186,19 @@ class MainMenuSceneLoader(SceneLoader):
         first_level_button = s.LevelLoadButton('FirstLevelButton', 120, 200, 160, 90, path_to_sprites + 'level_1.png',
                                                FirstSceneLoader())
         second_level_button = s.LevelLoadButton('SecondLevelButton', 300, 200, 160, 90, path_to_sprites + 'level_2.png',
-                                               SecondSceneLoader())
+                                                SecondSceneLoader())
         game_objects.append(second_level_button)
         game_objects.append(first_level_button)
 
         return game_objects
+
+    def get_path_to_scene_sprite(self):
+        return os.path.join('Sprites', 'main_menu.png')
+
+
+class TestSceneLoader(SceneLoader):
+    def create_object(self):
+        return []
 
     def get_path_to_scene_sprite(self):
         return os.path.join('Sprites', 'main_menu.png')

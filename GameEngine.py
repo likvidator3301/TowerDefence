@@ -20,10 +20,10 @@ class GameSession:
         self.next_scene_loader = None
         self.objects_for_create = []
         self._load_scene(scene_loader)
+        self.input = Input()
         if not debug:
             self.window = ui_manager.MainWindow(1600, 900, True)
             self.window.show_scene(self.scene)
-            self.input = Input()
             self.create_level(self.current_scene_loader.create_object())
 
     def load_scene(self, scene_loader):
@@ -91,6 +91,9 @@ class GameSession:
         self.scene.destroy_object_by_name(game_object.name)
         if game_object.visible:
             self.window.destroy_object(game_object.name)
+
+    def get_objects_by_tag(self, tag):
+        return self.scene.get_objects_by_tag(tag)
 
     def turn(self):
         self.objects_for_create.clear()
@@ -196,6 +199,9 @@ class Input:
 
     def get_click_pos(self, session):
         return session.window.get_mouse_click_pos()
+
+    def get_mouse_pos(self, session):
+        return session.window.get_mouse_pos()
 
 
 def main():

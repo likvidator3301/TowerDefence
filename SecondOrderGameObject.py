@@ -86,6 +86,7 @@ class TowerLabel(GameObject):
 class DefenceTower(GameObject):
     def __init__(self, name, x, y, width, height, path_to_sprite):
         super().__init__(name, x, y, width, height)
+        self.set_tag('DefenceTower')
         self.visible = True
         self.path_to_sprite = path_to_sprite
         self.add_behaviour(b.ValuableObject())

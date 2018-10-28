@@ -39,15 +39,37 @@ class SceneManager(i.IBehaviour):
 
     def start(self, session, game_object):
         self.end_game = False
+        self.session = session
         self.gold_manager = session.get_object_by_name('GoldManager') \
             .get_component('GoldManager')
         self.object = None
         self.tracking = False
         self.cost = 0
+        self.radius_pointes = []
+        self.need_to_create_radius = False
 
     def update(self, session, game_object):
         if not self.tracking:
             return
+        if self.need_to_create_radius and not session.input.get_mouse_pos(session) is None:
+            self.create_points()
+        elif self.need_to_create_radius:
+            return
+
+        if not session.input.get_mouse_pos(session) is None:
+            radius = self.object.get_component('DefenceTowerAttack').attack_radius
+            mouse_pos = self.session.input.get_mouse_pos(self.session)
+            x = mouse_pos.x()
+            y = mouse_pos.y()
+            self.radius_pointes[0].x = x + radius
+            self.radius_pointes[1].y = y + radius
+            self.radius_pointes[2].x = x - radius
+            self.radius_pointes[3].y = y - radius
+            self.radius_pointes[0].y = y
+            self.radius_pointes[1].x = x
+            self.radius_pointes[2].y = y
+            self.radius_pointes[3].x = x
+
 
         if session.input.get_left_button_scene_down(session) and self.gold_manager.get_gold() >= self.cost:
             pos = session.input.get_click_pos(session)
@@ -66,12 +88,33 @@ class SceneManager(i.IBehaviour):
         self.object = object
         self.cost = cost
 
+    def create_points(self):
+        radius = self.object.get_component('DefenceTowerAttack').attack_radius
+        mouse_pos = self.session.input.get_mouse_pos(self.session)
+        x = mouse_pos.x()
+        y = mouse_pos.y()
+        self.radius_pointes.append(s.VisibleGameObject('Point1', x + radius, y,
+                                                       8, 8, os.path.join('Sprites', 'radius_point.png')))
+        self.radius_pointes.append(s.VisibleGameObject('Point2', x, y + radius,
+                                                       8, 8, os.path.join('Sprites', 'radius_point.png')))
+        self.radius_pointes.append(s.VisibleGameObject('Point3', x - radius, y,
+                                                       8, 8, os.path.join('Sprites', 'radius_point.png')))
+        self.radius_pointes.append(s.VisibleGameObject('Point4', x, y - radius,
+                                                       8, 8, os.path.join('Sprites', 'radius_point.png')))
+        for obj in self.radius_pointes:
+            self.session.add_game_object(obj)
+        self.need_to_create_radius = False
+
     def start_tracking(self):
         self.tracking = True
+        self.need_to_create_radius = True
 
     def stop_tracking(self):
         self.tracking = False
         self.cost = 0
+        for obj in self.radius_pointes:
+            self.session.destroy_object(obj)
+        self.radius_pointes = []
 
 
 class HealthSystem(i.IBehaviour):
@@ -431,11 +474,10 @@ class RestartButton(i.IBehaviour):
         else:
             window = s.VisibleGameObject('ConfirmWindow', 800, 450, 500, 200,
                                                         os.path.join('Sprites', 'ask.png'))
-            confirm_button = s.VisibleGameObject('ConfirmButton', 730, 470, 130, 90,
+            confirm_button = s.VisibleGameObject('ConfirmButton', 680, 470, 160, 90,
                                                  os.path.join('Sprites', 'yes'))
             confirm_button.add_behaviour(ConfirmRestartButton())
-
-            denial_button = s.VisibleGameObject('DenialButton', 870, 470, 130, 90,
+            denial_button = s.VisibleGameObject('DenialButton', 920, 470, 160, 90,
                                                  os.path.join('Sprites', 'no'))
             denial_bitton_controller = DenialRestartButton()
             denial_bitton_controller.set_window_and_button(window, confirm_button)
@@ -555,7 +597,7 @@ class DefenceTowerUpgrade(i.IBehaviour):
         self.can_upgrade = True
 
     def on_mouse_down(self, session, game_object):
-        if not self.can_upgrade and \
+        if not self.can_upgrade or \
                 self.gold_manager.get_gold() < self.cost:
             return
         self.upgrade(session, game_object)
@@ -575,4 +617,23 @@ class EnemyDamageController(i.IBehaviour):
 
     def take_damage(self, enemy, damage, tower):
         self.health_system.change_health(-self.rule(enemy, damage, tower))
+
+
+class ReinforcementTower(i.IBehaviour):
+    def __init__(self):
+        self.name = 'ReinforcementTower'
+
+    def start(self, session, game_object):
+        attack_manager = game_object.get_component('DefenceTowerAttack')
+        radius = attack_manager.attack_radius
+        near_towers = []
+        for obj in session.get_objects_by_tag('DefenceTower'):
+            if GameObjects.get_distance_between_game_objects(game_object, obj) < radius:
+                near_towers.append(obj)
+                radius += 50
+        for obj in near_towers:
+            attack_manager.set_attack_radius(radius)
+            obj.get_component('DefenceTowerAttack').set_attack_radius(radius)
+
+
 

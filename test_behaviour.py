@@ -4,6 +4,8 @@ import unittest
 import GameEngine
 import FirstOrderGameObject as f
 import SecondOrderGameObject as s
+import SceneLoader as o
+import os.path as p
 import pytest
 
 from BehaviourScripts import BehaviourScripts as b
@@ -12,19 +14,18 @@ from CrotysEngine import Constants
 
 class TestBehaviours:
     def test_label_for_create_object(self):
-        scene = f.Scene('Sprites' + Constants.DELIMITER + 'scene_1.png')
-        self.session = GameEngine.GameSession(scene, True)
-        self.object = s.GameObject('GameObject', 0, 0, 0, 0)
+        self.session = GameEngine.GameSession(o.FirstSceneLoader(), True)
+        self.object = s.VisibleGameObject('GameObject', 0, 0, 0, 0, p.join('Sprites', 'level_1.png'))
 
         self.object.add_behaviour(b.ValuableObject())
-        beh = b.LabelForCreateObject(self.object)
+        beh = b.LabelForCreateObject(self.object, p.join('Sprites', 'level_1.png'))
 
         gold_manager = s.InvisibleGameObject('GoldManager', 0, 0, 0, 0)
         gold_manager.add_behaviour(b.GoldManager())
         scene_manager = s.SceneManager('SceneManager', 0, 0, 0, 0)
 
-        self.session.scene._add_game_object(gold_manager)
-        self.session.scene._add_game_object(scene_manager)
+        self.session._add_game_object(gold_manager)
+        self.session._add_game_object(scene_manager)
 
         beh.start(self.session, self.object)
 
@@ -36,8 +37,7 @@ class TestBehaviours:
         assert beh.scene_manager == scene_manager.get_component('SceneManager')
 
     def test_scene_manager(self):
-        scene = f.Scene('Sprites' + Constants.DELIMITER + 'scene_1.png')
-        self.session = GameEngine.GameSession(scene, True)
+        self.session = GameEngine.GameSession(o.FirstSceneLoader(), True)
         self.object = s.GameObject('GameObject', 0, 0, 0, 0)
         self.session._add_game_object(s.GameObject('GoldManager', 0, 0, 0, 0))
 
@@ -54,8 +54,7 @@ class TestBehaviours:
         assert beh.tracking
 
     def test_health_system(self):
-        scene = f.Scene('Sprites' + Constants.DELIMITER + 'scene_1.png')
-        self.session = GameEngine.GameSession(scene, True)
+        self.session = GameEngine.GameSession(o.FirstSceneLoader(), True)
         self.object = s.GameObject('GameObject', 0, 0, 0, 0)
 
         beh = b.HealthSystem()
@@ -69,27 +68,8 @@ class TestBehaviours:
         beh.change_health(-200)
         assert beh.health == 200
 
-    def test_ai_controller(self):
-        scene = f.Scene('Sprites' + Constants.DELIMITER + 'scene_1.png')
-        self.session = GameEngine.GameSession(scene, True)
-        self.object = s.GameObject('GameObject', 0, 0, 0, 0)
-
-        enemys_manager = s.InvisibleGameObject('EnemysManager', 0, 0, 0, 0)
-        controller = b.Manager()
-        controller.set_max_enemys(5)
-        enemys_manager.add_behaviour(controller)
-        self.session._add_game_object(enemys_manager)
-
-        beh = b.AIController()
-
-        controller.start(self.session, self.object)
-        beh.start(self.session, self.object)
-
-        assert beh.ai_points == controller.ai_points
-
     def test_enemys_manager(self):
-        scene = f.Scene('Sprites' + Constants.DELIMITER + 'scene_1.png')
-        self.session = GameEngine.GameSession(scene, True)
+        self.session = GameEngine.GameSession(o.FirstSceneLoader(), True)
         self.object = s.GameObject('GameObject', 0, 0, 0, 0)
 
         beh = b.Manager()
@@ -105,8 +85,7 @@ class TestBehaviours:
         assert beh.count_of_enemys_on_scene == 4
 
     def test_gold_label(self):
-        scene = f.Scene('Sprites' + Constants.DELIMITER + 'scene_1.png')
-        self.session = GameEngine.GameSession(scene, True)
+        self.session = GameEngine.GameSession(o.FirstSceneLoader(), True)
         self.object = s.GameObject('GameObject', 0, 0, 0, 0)
 
         beh = b.GoldLabel()
@@ -120,16 +99,14 @@ class TestBehaviours:
         assert beh.text == 'gaaaaaaaaameeeeeeeee'
 
     def test_move_point(self):
-        scene = f.Scene('Sprites' + Constants.DELIMITER + 'scene_1.png')
-        self.session = GameEngine.GameSession(scene, True)
+        self.session = GameEngine.GameSession(o.FirstSceneLoader(), True)
         self.object = s.GameObject('GameObject', 0, 0, 0, 0)
 
         beh = b.MovePoint()
         assert beh.name == 'MovePoint'
 
     def test_gold_manager(self):
-        scene = f.Scene('Sprites' + Constants.DELIMITER + 'scene_1.png')
-        self.session = GameEngine.GameSession(scene, True)
+        self.session = GameEngine.GameSession(o.FirstSceneLoader(), True)
         self.object = s.GameObject('GameObject', 0, 0, 0, 0)
 
         beh = b.GoldManager()
@@ -143,8 +120,7 @@ class TestBehaviours:
         assert beh.gold == 200
 
     def test_valueable_object(self):
-        scene = f.Scene('Sprites' + Constants.DELIMITER + 'scene_1.png')
-        self.session = GameEngine.GameSession(scene, True)
+        self.session = GameEngine.GameSession(o.FirstSceneLoader(), True)
         self.object = s.GameObject('GameObject', 0, 0, 0, 0)
 
         beh = b.ValuableObject()
@@ -156,8 +132,7 @@ class TestBehaviours:
         assert beh.cost == 100
 
     def test_defence_tower_attack(self):
-        scene = f.Scene('Sprites' + Constants.DELIMITER + 'scene_1.png')
-        self.session = GameEngine.GameSession(scene, True)
+        self.session = GameEngine.GameSession(o.FirstSceneLoader(), True)
         self.object = s.GameObject('GameObject', 0, 0, 0, 0)
 
         beh = b.DefenceTowerAttack()
@@ -171,8 +146,7 @@ class TestBehaviours:
         assert beh.damage == 5
 
     def test_enemy_attack(self):
-        scene = f.Scene('Sprites' + Constants.DELIMITER + 'scene_1.png')
-        self.session = GameEngine.GameSession(scene, True)
+        self.session = GameEngine.GameSession(o.FirstSceneLoader(), True)
         self.object = s.GameObject('GameObject', 0, 0, 0, 0)
 
         beh = b.EnemyAttack()

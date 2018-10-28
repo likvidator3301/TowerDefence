@@ -18,7 +18,6 @@ class MainWindow(QWidget):
         self.window_width = width
         self.initUI(fullscreen)
         self.mouse_down = False
-        self.setMouseTracking(True)
         self.showed_scene = False
 
     def initUI(self, fullscreen):
@@ -89,9 +88,13 @@ class MainWindow(QWidget):
         self.scene_label.mouse_event = None
         self.scene_label.click_pos = None
         self.scene_label.right_mouse_down = False
+        self.scene_label.mouse_pos = None
 
     def get_mouse_click_pos(self):
         return self.scene_label.click_pos
+
+    def get_mouse_pos(self):
+        return self.scene_label.mouse_pos
 
     def get_mouse_event(self):
         try:
@@ -105,6 +108,7 @@ class SceneLabel(QLabel):
         super().__init__(parrent)
         self.mouse_down = False
         self.right_mouse_down = False
+        self.setMouseTracking(True)
 
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
@@ -114,12 +118,16 @@ class SceneLabel(QLabel):
         self.mouse_event = event
         self.click_pos = event.pos()
 
+    def mouseMoveEvent(self, event):
+        self.mouse_pos = event.pos()
+
 
 class ObjectLabel(QLabel):
     def __init__(self, parrent, name):
         super().__init__(parrent)
         self.left_mouse_down = False
         self.backgroundRole()
+
 
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
