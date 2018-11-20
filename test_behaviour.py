@@ -6,7 +6,6 @@ import FirstOrderGameObject as f
 import SecondOrderGameObject as s
 import SceneLoader as o
 import os.path as p
-import pytest
 
 from BehaviourScripts import BehaviourScripts as b
 from CrotysEngine import Constants

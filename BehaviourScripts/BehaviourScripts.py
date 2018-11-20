@@ -3,7 +3,7 @@
 import os
 import Interfaces as i
 import SecondOrderGameObject as s
-from PyQt5.QtCore import QPoint
+from PyQt5.QtWidgets import QInputDialog
 from CrotysEngine import GameObjects, Constants
 
 
@@ -21,15 +21,15 @@ class LabelForCreateObject(i.IBehaviour):
         self.gold_manager = session.get_object_by_name('GoldManager')\
             .get_component('GoldManager')
 
-    def update(self, session, game_object):
-        if session.input.get_right_button_scene_down(session):
-            self.scene_manager.stop_tracking()
-            game_object.path_to_sprite = self.path_to_default_object
-
     def on_mouse_down(self, session, game_object):
         if self.gold_manager.get_gold() >= self.cost:
             game_object.path_to_sprite = self.path_to_enable_object
             self.scene_manager.set_creating_object(self.object, self.cost)
+            mouse_pos = session.input.get_mouse_pos_by_object(session, game_object)
+            x = int(game_object.x + mouse_pos.x() - game_object.width / 2)
+            y = int(game_object.y + mouse_pos.y() - game_object.height / 2)
+            self.scene_manager.set_mouse_pos(x, y)
+            self.scene_manager.set_label(game_object, self.path_to_default_object)
             self.scene_manager.start_tracking()
 
 
@@ -45,76 +45,53 @@ class SceneManager(i.IBehaviour):
         self.object = None
         self.tracking = False
         self.cost = 0
-        self.radius_pointes = []
         self.need_to_create_radius = False
+        self.mouse_x = 0
+        self.mouse_y = 0
+        self.session = session
+        self.label = None
+        self.path_to_default_sprite = ''
 
-    def update(self, session, game_object):
-        if not self.tracking:
-            return
-        if self.need_to_create_radius and not session.input.get_mouse_pos(session) is None:
-            self.create_points()
-        elif self.need_to_create_radius:
-            return
+    def set_label(self, label, path_to_default_sprite):
+        self.label = label
+        self.path_to_default_sprite = path_to_default_sprite
 
-        if not session.input.get_mouse_pos(session) is None:
-            radius = self.object.get_component('DefenceTowerAttack').attack_radius
-            mouse_pos = self.session.input.get_mouse_pos(self.session)
-            x = mouse_pos.x()
-            y = mouse_pos.y()
-            self.radius_pointes[0].x = x + radius
-            self.radius_pointes[1].y = y + radius
-            self.radius_pointes[2].x = x - radius
-            self.radius_pointes[3].y = y - radius
-            self.radius_pointes[0].y = y
-            self.radius_pointes[1].x = x
-            self.radius_pointes[2].y = y
-            self.radius_pointes[3].x = x
+    def set_default_label(self):
+        self.label.path_to_sprite = self.path_to_default_sprite
 
-
-        if session.input.get_left_button_scene_down(session) and self.gold_manager.get_gold() >= self.cost:
-            pos = session.input.get_click_pos(session)
-            x = pos.x()
-            y = pos.y()
-
+    def build_tower(self, x, y):
+        if self.gold_manager.get_gold() >= self.cost:
             object = GameObjects.instantiate(self.object)
 
             object.x = x
             object.y = y
 
-            session.add_game_object(object)
+            self.session.add_game_object(object)
             self.gold_manager.change_gold(-self.cost)
 
     def set_creating_object(self, object, cost):
         self.object = object
         self.cost = cost
 
-    def create_points(self):
-        radius = self.object.get_component('DefenceTowerAttack').attack_radius
-        mouse_pos = self.session.input.get_mouse_pos(self.session)
-        x = mouse_pos.x()
-        y = mouse_pos.y()
-        self.radius_pointes.append(s.VisibleGameObject('Point1', x + radius, y,
-                                                       8, 8, os.path.join('Sprites', 'radius_point.png')))
-        self.radius_pointes.append(s.VisibleGameObject('Point2', x, y + radius,
-                                                       8, 8, os.path.join('Sprites', 'radius_point.png')))
-        self.radius_pointes.append(s.VisibleGameObject('Point3', x - radius, y,
-                                                       8, 8, os.path.join('Sprites', 'radius_point.png')))
-        self.radius_pointes.append(s.VisibleGameObject('Point4', x, y - radius,
-                                                       8, 8, os.path.join('Sprites', 'radius_point.png')))
-        for obj in self.radius_pointes:
-            self.session.add_game_object(obj)
-        self.need_to_create_radius = False
-
     def start_tracking(self):
         self.tracking = True
         self.need_to_create_radius = True
+        attack_radius = self.object.get_component('DefenceTowerAttack').get_radius()
+        radius_sprite = s.VisibleGameObject('RadiusSprite', self.mouse_x, self.mouse_y, attack_radius, attack_radius, os.path.join('Sprites', 'radius_' + str(attack_radius) + '.png'))
+        radius_sprite.add_behaviour(RadiusSprite())
+        self.session.add_game_object(radius_sprite)
 
     def stop_tracking(self):
         self.tracking = False
         self.cost = 0
-        for obj in self.radius_pointes:
-            self.session.destroy_object(obj)
-        self.radius_pointes = []
+        self.mouse_x = 0
+        self.mouse_y = 0
+        self.label = None
+        self.path_to_default_sprite = None
+
+    def set_mouse_pos(self, x, y):
+        self.mouse_x = x
+        self.mouse_y = y
 
 
 class HealthSystem(i.IBehaviour):
@@ -182,7 +159,10 @@ class AIController(i.IBehaviour):
                          .get_cost())
         session.get_object_by_name('EnemysManager') \
             .get_component('Manager').on_destroy_enemy()
-
+        main_tower = session.get_object_by_name('MainTower')
+        dist = GameObjects.get_distance_between_game_objects(game_object, main_tower)
+        score = int(50 * dist / 900)
+        session.get_object_by_name('SceneManager').get_component('RecordsController').change_score(score)
 
 class Manager(i.IBehaviour):
     def __init__(self):
@@ -374,11 +354,17 @@ class DefenceTowerAttack(i.IBehaviour):
     def set_attack_radius(self, value):
         self.attack_radius = value
 
+    def get_radius(self):
+        return self.attack_radius
+
     def set_damage(self, value):
         self.damage = value
 
     def set_type(self, tower_type):
         self.tower_type = tower_type
+
+    def set_attack_radius_sprite(self, obj):
+        self.attack_radius_sprite = obj
 
 
 class EnemyAttack(i.IBehaviour):
@@ -489,8 +475,6 @@ class RestartButton(i.IBehaviour):
 
             session.pause()
 
-
-
 class ConfirmRestartButton(i.IBehaviour):
     def __init__(self):
         self.name = 'ConfirmRestartButton'
@@ -582,7 +566,7 @@ class DefenceTowerUpgrade(i.IBehaviour):
 
     def upgrade(self, session, game_object):
         session.destroy_object(game_object)
-        new_tower = self.next_tower
+        new_tower = GameObjects.instantiate(self.next_tower)
         new_tower.x = game_object.x
         new_tower.y = game_object.y
         session.add_game_object(new_tower)
@@ -635,5 +619,95 @@ class ReinforcementTower(i.IBehaviour):
             attack_manager.set_attack_radius(radius)
             obj.get_component('DefenceTowerAttack').set_attack_radius(radius)
 
+
+class RadiusSprite(i.IBehaviour):
+    def __init__(self):
+        self.name = 'RadiusSprite'
+
+    def start(self, session, game_object):
+        self.manager = session.get_object_by_name('SceneManager').get_component('SceneManager')
+
+    def update(self, session, game_object):
+        mouse_pos = session.input.get_mouse_pos_by_object(session, game_object)
+        if mouse_pos is None:
+            mouse_pos = session.input.get_mouse_pos(session)
+            if mouse_pos is None:
+                return
+            game_object.x = mouse_pos.x()
+            game_object.y = mouse_pos.y()
+            return
+
+        x = mouse_pos.x()
+        y = mouse_pos.y()
+
+        x = int(game_object.x - game_object.width / 2 + x)
+        y = int(game_object.y - game_object.height / 2 + y)
+        if x < 0 or y < 0:
+            x = 0
+            y = 0
+        game_object.x = x
+        game_object.y = y
+
+    def on_mouse_down(self, session, game_object):
+        self.manager.build_tower(game_object.x, game_object.y)
+
+    def on_right_mouse_down(self, session, game_object):
+        self.manager.set_default_label()
+        self.manager.stop_tracking()
+        session.destroy_object(game_object)
+
+
+class RecordsController(i.IBehaviour):
+    def __init__(self):
+        self.name = 'RecordsController'
+        
+    def start(self, session, game_object):
+        self.main_tower = session.get_object_by_name('MainTower')
+        self.enemys_manager = session.get_object_by_name('EnemysManager').get_component('Manager')
+        self.active = True
+        self.score = 0
+        with open('records.txt', 'r') as f:
+            records = f.readlines()
+        records.sort(key=lambda x: int(x.split('-')[1][0:-1]))
+        session.get_object_by_name('RecordsButton').get_component('RecordsTableButton').set_records(records)
+
+    def update(self, session, game_object):
+        if self.active and (self.main_tower is None or self.enemys_manager.player_win):
+            text, ok = session.read_info_from_user('Record', 'Your score is ' + str(self.score) + '\nEnter your name')
+            if ok:
+                with open('records.txt', 'a') as f:
+                    f.write(text + '-' + str(self.score) + '\n')
+            self.active = False
+
+    def change_score(self, delta):
+        self.score += delta
+
+class RecordsTableButton(i.IBehaviour):
+    def __init__(self):
+        self.name = 'RecordsTableButton'
+        self.records = []
+        self.records_label = []
+        self.visible = False
+
+    def on_mouse_down(self, session, game_object):
+        if self.visible:
+            for lbl in self.records_label:
+                session.destroy_object(lbl)
+            session.continue_game()
+            self.visible = False
+        else:
+            session.pause()
+            i = 1
+            for record in self.records:
+                if i == 11:
+                    break
+                lbl = s.TextLabel('RecordLabel' + str(i), 800, 100 + 50 * i, 800, 50, record)
+                i += 1
+                session.add_game_object(lbl)
+                self.records_label.append(lbl)
+            self.visible = True
+
+    def set_records(self, records):
+        self.records = records
 
 

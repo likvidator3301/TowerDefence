@@ -115,6 +115,14 @@ class UILabel(GameObject):
         self.text = controller.get_text()
 
 
+class TextLabel(GameObject):
+    def __init__(self, name, x, y, width, height, text):
+        super().__init__(name, x, y, width, height)
+        self.visible = True
+        self.set_tag('UI')
+        self.text = text
+
+
 class LevelLoadButton(GameObject):
     def __init__(self, name, x, y, width, height, path_to_sprite, scene_loader):
         super().__init__(name,  x, y, width, height)

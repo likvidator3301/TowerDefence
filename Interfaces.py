@@ -15,5 +15,8 @@ class IBehaviour:
     def on_mouse_down(self, session, game_object):
         """Called when mouse down"""
 
+    def on_right_mouse_down(self, session, game_object):
+        """Called when right mouse button down"""
+
     def destroy(self, session, game_object):
         """Called when object is destroyed"""

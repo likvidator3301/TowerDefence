@@ -5,7 +5,7 @@ import SceneLoader as o
 import FirstOrderGameObject as f
 import sys
 
-from PyQt5.QtWidgets import QApplication
+from PyQt5.QtWidgets import QApplication, QInputDialog
 from PyQt5.QtCore import QTimer
 
 
@@ -25,6 +25,10 @@ class GameSession:
             self.window = ui_manager.MainWindow(1600, 900, True)
             self.window.show_scene(self.scene)
             self.create_level(self.current_scene_loader.create_object())
+
+    def read_info_from_user(self, window_title, ask):
+        text, ok = QInputDialog.getText(self.window, window_title, ask)
+        return text, ok
 
     def load_scene(self, scene_loader):
         self.need_to_load_next_scene = True
@@ -113,9 +117,11 @@ class GameSession:
                 if (gameObject.visible and
                         self.input.left_mouse_button_down(self, gameObject)):
                     gameObject.behaviour[nameB].on_mouse_down(self, gameObject)
+                elif (gameObject.visible and
+                        self.input.get_right_mouse_button_down_by_object(self, gameObject)):
+                    gameObject.behaviour[nameB].on_right_mouse_down(self, gameObject)
                 if not self.paused:
                     gameObject.behaviour[nameB].update(self, gameObject)
-
 
             if gameObject.visible:
                 self.window.destroy_object(gameObject.name)
@@ -188,6 +194,9 @@ class Input:
     def left_mouse_button_down(self, session, object):
         return session.window.object_left_click(object)
 
+    def get_mouse_pos_by_object(self, session, obj):
+        return session.window.game_objects[obj.name].mouse_pos
+
     def get_left_button_scene_down(self, session):
         return session.window.get_left_button_down()
 
@@ -196,6 +205,9 @@ class Input:
 
     def get_left_mouse_button_down_event(self, session):
         return session.window.get_mouse_event()
+
+    def get_right_mouse_button_down_by_object(self, session, obj):
+        return session.window.game_objects[obj.name].right_mouse_down
 
     def get_click_pos(self, session):
         return session.window.get_mouse_click_pos()
